@@ -26,10 +26,10 @@ public class SimpleReadWriteLock implements ReadWriteLock {
     class ReadLock implements Lock {
         @Override
         public void lock() {
-            synchronized (SimpleReadWriteLock.class) {
+            synchronized (SimpleReadWriteLock.this) {
                 try {
                     while (writer) {
-                        SimpleReadWriteLock.class.wait();
+                        SimpleReadWriteLock.this.wait();
                     }
                     readers++;
                 } catch (InterruptedException ignored) {
@@ -39,22 +39,22 @@ public class SimpleReadWriteLock implements ReadWriteLock {
 
         @Override
         public void unlock() {
-            synchronized (SimpleReadWriteLock.class) {
+            synchronized (SimpleReadWriteLock.this) {
                 readers--;
                 if (readers == 0) {
-                    SimpleReadWriteLock.class.notifyAll();
+                    SimpleReadWriteLock.this.notifyAll();
                 }
             }
         }
     }
 
-    protected class WriteLock implements Lock {
+    class WriteLock implements Lock {
         @Override
         public void lock() {
-            synchronized (SimpleReadWriteLock.class) {
+            synchronized (SimpleReadWriteLock.this) {
                 try {
-                    while (readers > 0) {
-                        SimpleReadWriteLock.class.wait();
+                    while (readers > 0 || writer) {
+                        SimpleReadWriteLock.this.wait();
                     }
                     writer = true;
                 } catch (InterruptedException ignored) {
@@ -64,9 +64,9 @@ public class SimpleReadWriteLock implements ReadWriteLock {
 
         @Override
         public void unlock() {
-            synchronized (SimpleReadWriteLock.class) {
+            synchronized (SimpleReadWriteLock.this) {
                 writer = false;
-                SimpleReadWriteLock.class.notifyAll();
+                SimpleReadWriteLock.this.notifyAll();
             }
         }
     }
